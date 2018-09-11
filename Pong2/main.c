@@ -136,13 +136,28 @@ void ProcessEvents (SDL_Event *ev)
 }
 
 
+bool PaddleCollision (paddle_t pad)
+{
+	Box		bbox, pbox;
+	Rect	brect, prect;
+	
+	TFBoxFromPoint(&bbox, &ball.pt, &ball.size);
+	TFBoxFromPoint(&pbox, &paddles[pad].pt, &paddles[pad].size);
+	brect = MakeRectFromPoint(ball.pt, ball.size);
+	prect = MakeRectFromPoint(paddles[pad].pt, paddles[pad].size);
+
+	if (TFRectsCollide(&brect, &prect))
+		return true;
+	else
+		return false;
+}
+
 void Process (void)
 {
 	Box 	bbox, pbox[2];
-	Rect	brect, prect[2];
+	float	ballmidy;
 	obj_t	*p;
 	int 	i;
-	hit_t	hittype;
 	
 	// move paddles
 	for (i=0, p=&paddles[0]; i<2; i++, p++)
@@ -187,33 +202,21 @@ void Process (void)
 	//
 	// check collision
 	//
+	ballmidy = ball.pt.y + BALLRADIUS / 2;
 	
-	TFBoxFromPoint(&bbox, &ball.pt, &ball.size);
-	brect = MakeRectFromPoint(ball.pt, ball.size);
-
 	// left paddle
-	if ( ball.pt.x < P0X+PADDLEWIDTH )
+	if ( ball.pt.x < P0X+PADDLEWIDTH && PaddleCollision(LEFT) )
 	{
-		TFBoxFromPoint(&pbox[0], &paddles[0].pt, &paddles[0].size);
-		prect[0] = MakeRectFromPoint(paddles[0].pt, paddles[0].size);
-		if ( TFRectsCollide(&brect, &prect[0]) )
-		{
-			ball.pt.x = pbox[0].right;
-			ball.dx = -ball.dx;
-			Mix_PlayChannel(-1, sounds[padhit], 0);
-		}
+		ball.pt.x = pbox[0].right;
+		ball.dx = -ball.dx;
+		Mix_PlayChannel(-1, sounds[padhit], 0);
 	}
 	// right paddle
-	else if ( bbox.left > P1X )
+	else if ( bbox.left > P1X && PaddleCollision(RIGHT) )
 	{
-		TFBoxFromPoint(&pbox[1], &paddles[1].pt, &paddles[1].size);
-		prect[1] = MakeRectFromPoint(paddles[1].pt, paddles[1].size);
-		if ( TFRectsCollide(&brect, &prect[1]))
-		{
-			ball.pt.x = P1X-BALLRADIUS;
-			ball.dx = -ball.dx;
-			Mix_PlayChannel(-1, sounds[padhit], 0);
-		}
+		ball.pt.x = P1X-BALLRADIUS;
+		ball.dx = -ball.dx;
+		Mix_PlayChannel(-1, sounds[padhit], 0);
 	}
 }
 
