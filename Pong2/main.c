@@ -139,8 +139,10 @@ void ProcessEvents (SDL_Event *ev)
 void Process (void)
 {
 	Box 	bbox, pbox[2];
+	Rect	brect, prect[2];
 	obj_t	*p;
 	int 	i;
+	hit_t	hittype;
 	
 	// move paddles
 	for (i=0, p=&paddles[0]; i<2; i++, p++)
@@ -182,53 +184,37 @@ void Process (void)
 		ball.dy = -ball.dy;
 	}
 	
+	//
 	// check collision
-	if (ball.pt.x > pbox[0].right+BALLRADIUS && ball.pt.x < pbox[1].left-BALLRADIUS)
-		return;
+	//
+	
 	TFBoxFromPoint(&bbox, &ball.pt, &ball.size);
-	TFBoxFromPoint(&pbox[0], &paddles[0].pt, &paddles[0].size);
-	TFBoxFromPoint(&pbox[1], &paddles[1].pt, &paddles[1].size);
-	for (i=0; i<2; i++)
+	brect = MakeRectFromPoint(ball.pt, ball.size);
+
+	// left paddle
+	if ( ball.pt.x < P0X+PADDLEWIDTH )
 	{
-		// vertically aligned
-		if (bbox.right > pbox[i].left && bbox.left < pbox[i].right)
+		TFBoxFromPoint(&pbox[0], &paddles[0].pt, &paddles[0].size);
+		prect[0] = MakeRectFromPoint(paddles[0].pt, paddles[0].size);
+		if ( TFRectsCollide(&brect, &prect[0]) )
 		{
-			// hit from below
-			if (bbox.top < pbox[i].bottom && bbox.bottom > pbox[i].bottom) {
-				ball.pt.y = pbox[i].bottom;
-				ball.dy = -ball.dy;
-				ball.dx = -ball.dx;
-				Mix_PlayChannel(-1, sounds[padhit], 0);
-			}
-			// hit from above
-			else if (bbox.bottom > pbox[i].top && bbox.top < pbox[i].top) {
-				ball.pt.y = pbox[i].top-BALLRADIUS;
-				ball.dy = -ball.dy;
-				ball.dx = -ball.dx;
-				Mix_PlayChannel(-1, sounds[padhit], 0);
-			}
-		}
-		
-		TFBoxFromPoint(&bbox, &ball.pt, &ball.size); // update
-		
-		// horizontally aligned
-		if (bbox.bottom > pbox[i].top && bbox.top < pbox[i].bottom)
-		{
-			// hit from left
-			if (bbox.right > pbox[i].left && bbox.left < pbox[i].left) {
-				ball.pt.x = pbox[i].left-BALLRADIUS;
-				ball.dx = -ball.dx;
-				Mix_PlayChannel(-1, sounds[padhit], 0);
-			}
-			// hit from right
-			else if (bbox.left < pbox[i].right && bbox.right > pbox[i].right) {
-				ball.pt.x = pbox[i].right;
-				ball.dx = -ball.dx;
-				Mix_PlayChannel(-1, sounds[padhit], 0);
-			}
+			ball.pt.x = pbox[0].right;
+			ball.dx = -ball.dx;
+			Mix_PlayChannel(-1, sounds[padhit], 0);
 		}
 	}
-	
+	// right paddle
+	else if ( bbox.left > P1X )
+	{
+		TFBoxFromPoint(&pbox[1], &paddles[1].pt, &paddles[1].size);
+		prect[1] = MakeRectFromPoint(paddles[1].pt, paddles[1].size);
+		if ( TFRectsCollide(&brect, &prect[1]))
+		{
+			ball.pt.x = P1X-BALLRADIUS;
+			ball.dx = -ball.dx;
+			Mix_PlayChannel(-1, sounds[padhit], 0);
+		}
+	}
 }
 
 
@@ -241,7 +227,7 @@ void Display (void)
 	
 	SetVGADrawColor(VGA_BLACK);
 	SDL_RenderClear(renderer);
-	SetVGADrawColor(VGA_BWHITE); // too primative for color!
+	SetVGADrawColor(VGA_BWHITE); // too primitive for color!
 	
 	// net
 	for (y=0; y<SCREENHEIGHT; y+=16)
