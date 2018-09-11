@@ -152,10 +152,29 @@ bool PaddleCollision (paddle_t pad)
 		return false;
 }
 
+
+void SetBallAngle (float hitpt)
+{
+	if (hitpt >= 0 && hitpt < 7)
+		ball.dy = BALLSPEED+4;
+	else if (hitpt >= 7 && hitpt < 14)
+		ball.dy = BALLSPEED+2;
+	else if (hitpt >= 14 && hitpt < 21)
+		ball.dy = BALLSPEED;
+	else if (hitpt >= 21 && hitpt < 28)
+		ball.dy = 0;
+	else if (hitpt >= 28 && hitpt < 35)
+		ball.dy = -BALLSPEED;
+	else if (hitpt >= 35 && hitpt < 42)
+		ball.dy = -BALLSPEED-2;
+	else if (hitpt >= 42 && hitpt < 48)
+		ball.dy = -BALLSPEED-4;
+}
+
 void Process (void)
 {
 	Box 	bbox, pbox[2];
-	float	ballmidy;
+	float	ballmidy, hitpt;
 	obj_t	*p;
 	int 	i;
 	
@@ -202,6 +221,7 @@ void Process (void)
 	//
 	// check collision
 	//
+	
 	ballmidy = ball.pt.y + BALLRADIUS / 2;
 	
 	// left paddle
@@ -209,6 +229,10 @@ void Process (void)
 	{
 		ball.pt.x = pbox[0].right;
 		ball.dx = -ball.dx;
+		
+		hitpt = pbox[0].bottom - ballmidy;
+		SetBallAngle(hitpt);
+		
 		Mix_PlayChannel(-1, sounds[padhit], 0);
 	}
 	// right paddle
@@ -216,6 +240,10 @@ void Process (void)
 	{
 		ball.pt.x = P1X-BALLRADIUS;
 		ball.dx = -ball.dx;
+		
+		hitpt = pbox[1].bottom - ballmidy;
+		SetBallAngle(hitpt);
+
 		Mix_PlayChannel(-1, sounds[padhit], 0);
 	}
 }
